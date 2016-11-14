@@ -888,6 +888,8 @@ struct pipe_memory_info
    unsigned nr_device_memory_evictions; /**< # of evictions (monotonic counter) */
 };
 
+struct pipe_memory_object;
+
 #ifdef __cplusplus
 }
 #endif
