@@ -377,6 +377,12 @@ union r600_mmio_counters {
 	unsigned array[0];
 };
 
+struct r600_memory_object {
+	struct pb_buffer		*buf;
+	uint32_t			stride;
+	uint32_t			offset;
+};
+
 struct r600_common_screen {
 	struct pipe_screen		b;
 	struct radeon_winsys		*ws;

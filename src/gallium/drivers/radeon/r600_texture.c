@@ -2784,10 +2784,92 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 	}
 }
 
+static struct pipe_memory_object *
+r600_memobj_from_handle(struct pipe_screen *screen,
+			struct winsys_handle *whandle)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_memory_object *memobj = CALLOC_STRUCT(r600_memory_object);
+	struct pb_buffer *buf = NULL;
+	uint32_t stride, offset;
+
+	if (!memobj)
+		return NULL;
+
+	buf = rscreen->ws->buffer_from_handle(rscreen->ws, whandle,
+					      &stride, &offset);
+	if (!buf)
+		return NULL;
+
+	memobj->buf = buf;
+	memobj->stride = stride;
+	memobj->offset = offset;
+
+	return (struct pipe_memory_object *)memobj;
+}
+
+static void
+r600_memobj_destroy(struct pipe_screen *screen,
+		    struct pipe_memory_object *memobj)
+{
+	free(memobj);
+}
+
+static struct pipe_resource *
+r600_texture_from_memobj(struct pipe_screen *screen,
+			 const struct pipe_resource *templ,
+			 struct pipe_memory_object *_memobj,
+			 uint64_t offset)
+{
+	int r;
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_memory_object *memobj = (struct r600_memory_object *)_memobj;
+	struct r600_texture *rtex;
+	struct radeon_surf surface;
+	struct radeon_bo_metadata metadata = {};
+	unsigned array_mode;
+	rscreen->ws->buffer_get_metadata(memobj->buf, &metadata);
+
+	surface.u.legacy.pipe_config = metadata.u.legacy.pipe_config;
+	surface.u.legacy.bankw = metadata.u.legacy.bankw;
+	surface.u.legacy.bankh = metadata.u.legacy.bankh;
+	surface.u.legacy.tile_split = metadata.u.legacy.tile_split;
+	surface.u.legacy.mtilea = metadata.u.legacy.mtilea;
+	surface.u.legacy.num_banks = metadata.u.legacy.num_banks;
+
+	if (metadata.u.legacy.macrotile == RADEON_LAYOUT_TILED)
+		array_mode = RADEON_SURF_MODE_2D;
+	else if (metadata.u.legacy.microtile == RADEON_LAYOUT_TILED)
+		array_mode = RADEON_SURF_MODE_1D;
+	else
+		array_mode = RADEON_SURF_MODE_LINEAR_ALIGNED;
+
+	r = r600_init_surface(rscreen, &surface, templ,
+			      array_mode, memobj->stride,
+			      offset, true, metadata.u.legacy.scanout,
+			      false, false);
+	if (r)
+		return NULL;
+
+	rtex = r600_texture_create_object(screen, templ, memobj->buf, &surface);
+	if (!rtex)
+		return NULL;
+
+	rtex->resource.b.is_shared = true;
+
+	if (rscreen->apply_opaque_metadata)
+		rscreen->apply_opaque_metadata(rscreen, rtex, &metadata);
+
+	return &rtex->resource.b.b;
+}
+
 void r600_init_screen_texture_functions(struct r600_common_screen *rscreen)
 {
 	rscreen->b.resource_from_handle = r600_texture_from_handle;
 	rscreen->b.resource_get_handle = r600_texture_get_handle;
+	rscreen->b.resource_from_memobj = r600_texture_from_memobj;
+	rscreen->b.memobj_create_from_handle = r600_memobj_from_handle;
+	rscreen->b.memobj_destroy = r600_memobj_destroy;
 }
 
 void r600_init_context_texture_functions(struct r600_common_context *rctx)
