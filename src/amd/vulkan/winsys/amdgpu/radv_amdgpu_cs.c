@@ -29,6 +29,7 @@
 
 #include "ac_debug.h"
 #include "amdgpu_id.h"
+#include "radv_private.h"
 #include "radv_radeon_winsys.h"
 #include "radv_amdgpu_cs.h"
 #include "radv_amdgpu_bo.h"
@@ -947,7 +948,6 @@ static int radv_amdgpu_winsys_cs_submit(struct radeon_winsys_ctx *_ctx,
 	return ret;
 }
 
-
 static void *radv_amdgpu_winsys_get_cpu_addr(void *_cs, uint64_t addr)
 {
 	struct radv_amdgpu_cs *cs = (struct radv_amdgpu_cs *)_cs;
@@ -985,17 +985,33 @@ static void radv_amdgpu_winsys_cs_dump(struct radeon_winsys_cs *_cs,
 		    radv_amdgpu_winsys_get_cpu_addr, cs);
 }
 
-static struct radeon_winsys_ctx *radv_amdgpu_ctx_create(struct radeon_winsys *_ws)
+static uint32_t radv_to_amdgpu_priority(enum ctx_priority radv_priority)
+{
+	switch (radv_priority) {
+		case CTX_PRIORITY_HIGH:
+			return AMDGPU_CTX_PRIORITY_HIGH_HW;
+		case CTX_PRIORITY_NORMAL:
+			return AMDGPU_CTX_PRIORITY_NORMAL;
+		default:
+			radv_loge("Invalid radv priority %d\n, defualting to normal", radv_priority);
+			return AMDGPU_CTX_PRIORITY_NORMAL;
+	}
+}
+
+static struct radeon_winsys_ctx *radv_amdgpu_ctx_create(struct radeon_winsys *_ws,
+														enum ctx_priority priority)
 {
 	struct radv_amdgpu_winsys *ws = radv_amdgpu_winsys(_ws);
 	struct radv_amdgpu_ctx *ctx = CALLOC_STRUCT(radv_amdgpu_ctx);
+	uint32_t amdgpu_priority = radv_to_amdgpu_priority(priority);
 	int r;
 
 	if (!ctx)
 		return NULL;
-	r = amdgpu_cs_ctx_create(ws->dev, &ctx->ctx);
+
+	r = amdgpu_cs_ctx_create2(ws->dev, amdgpu_priority, &ctx->ctx);
 	if (r) {
-		fprintf(stderr, "amdgpu: radv_amdgpu_cs_ctx_create failed. (%i)\n", r);
+		fprintf(stderr, "amdgpu: radv_amdgpu_cs_ctx_create2 failed. (%i)\n", r);
 		goto error_create;
 	}
 	ctx->ws = ws;

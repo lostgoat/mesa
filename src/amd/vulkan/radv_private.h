@@ -69,6 +69,7 @@ typedef uint32_t xcb_window_t;
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_intel.h>
+#include <vulkan/vk_ext_queue_global_priority.h>
 #include <vulkan/vk_icd.h>
 
 #include "radv_entrypoints.h"
@@ -482,6 +483,7 @@ struct radv_queue {
 	VK_LOADER_DATA                              _loader_data;
 	struct radv_device *                         device;
 	struct radeon_winsys_ctx                    *hw_ctx;
+	enum ctx_priority                            priority;
 	int queue_family_index;
 	int queue_idx;
 
@@ -1550,5 +1552,11 @@ RADV_DEFINE_NONDISP_HANDLE_CASTS(radv_render_pass, VkRenderPass)
 RADV_DEFINE_NONDISP_HANDLE_CASTS(radv_sampler, VkSampler)
 RADV_DEFINE_NONDISP_HANDLE_CASTS(radv_shader_module, VkShaderModule)
 RADV_DEFINE_NONDISP_HANDLE_CASTS(radeon_winsys_sem, VkSemaphore)
+
+#define radv_foreach_ext_obj(__obj, __varname) \
+		/*Note: Any type with sType/pNext works here*/ \
+		for ( VkSubmitInfo *__varname = (VkSubmitInfo*)__obj->pNext;\
+				__varname != NULL;\
+				__varname = (VkSubmitInfo*)__varname->pNext)
 
 #endif /* RADV_PRIVATE_H */

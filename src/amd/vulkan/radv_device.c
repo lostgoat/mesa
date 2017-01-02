@@ -181,6 +181,15 @@ radv_extensions_register(struct radv_instance *instance,
 	return VK_SUCCESS;
 }
 
+#define radv_extensions_register_single(instance, extensions, name, version) \
+	radv_extensions_register(instance, \
+				extensions, \
+				&(VkExtensionProperties){ \
+					.extensionName = name, \
+					.specVersion = version \
+				}, \
+				1);
+
 static void
 radv_extensions_finish(struct radv_instance *instance,
 			struct radv_extensions *extensions)
@@ -299,6 +308,16 @@ radv_physical_device_init(struct radv_physical_device *device,
 					ARRAY_SIZE(common_device_extensions));
 	if (result != VK_SUCCESS)
 		goto fail;
+
+	if (true) {
+		radv_extensions_register_single(instance,
+						&device->extensions,
+						VK_EXT_queue_global_priority_EXTENSION_NAME,
+						0);
+		if (result != VK_SUCCESS)
+			goto fail;
+
+	}
 
 	fprintf(stderr, "WARNING: radv is not a conformant vulkan implementation, testing use only.\n");
 	device->name = get_chip_name(device->rad_info.family);
@@ -906,16 +925,41 @@ void radv_GetPhysicalDeviceMemoryProperties2KHR(
 						      &pMemoryProperties->memoryProperties);
 }
 
+static enum ctx_priority
+radv_get_queue_global_priority(VkQueueGlobalPriorityEXT *pObj)
+{
+	switch(pObj->priority) {
+	case VK_QUEUE_GLOBAL_PRIORITY_HIGH:
+		return CTX_PRIORITY_HIGH;
+	default:
+		return CTX_PRIORITY_NORMAL;
+	}
+}
+
 static int
 radv_queue_init(struct radv_device *device, struct radv_queue *queue,
-		int queue_family_index, int idx)
+		int queue_family_index, int idx, const VkDeviceQueueCreateInfo *create_info)
 {
 	queue->_loader_data.loaderMagic = ICD_LOADER_MAGIC;
 	queue->device = device;
 	queue->queue_family_index = queue_family_index;
 	queue->queue_idx = idx;
+	queue->priority = CTX_PRIORITY_NORMAL;
 
-	queue->hw_ctx = device->ws->ctx_create(device->ws);
+	radv_foreach_ext_obj(create_info, next_obj) {
+		switch (next_obj->sType) {
+		case VK_STRUCTURE_TYPE_QUEUE_GLOBAL_PRIORITY_EXT:
+			queue->priority = radv_get_queue_global_priority(
+									(VkQueueGlobalPriorityEXT*)next_obj);
+			break;
+		default:
+			radv_finishme("Unsupported queue extension VkStructureType %d\n",
+							next_obj->sType);
+			break;
+		}
+	}
+
+	queue->hw_ctx = device->ws->ctx_create(device->ws, queue->priority);
 	if (!queue->hw_ctx)
 		return VK_ERROR_OUT_OF_HOST_MEMORY;
 
@@ -1034,7 +1078,7 @@ VkResult radv_CreateDevice(
 		device->queue_count[qfi] = queue_create->queueCount;
 
 		for (unsigned q = 0; q < queue_create->queueCount; q++) {
-			result = radv_queue_init(device, &device->queues[qfi][q], qfi, q);
+			result = radv_queue_init(device, &device->queues[qfi][q], qfi, q, queue_create);
 			if (result != VK_SUCCESS)
 				goto fail;
 		}

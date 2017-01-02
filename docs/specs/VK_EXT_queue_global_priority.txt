@@ -1,0 +1,97 @@
+Name Strings
+
+    VK_EXT_queue_global_priority
+
+Extension Type
+
+    Queue Extension
+
+Registered Extension Number
+
+    Draft
+
+Status
+
+    Draft
+
+Version
+
+    0 (Early Draft)
+
+Last Modified Date
+
+    See git log.
+
+IP Status
+
+    No known IP claims.
+
+Dependencies
+
+    This extension is written against the Vulkan 1.0.32 specification [1].
+
+Contributors
+
+    Andres Rodriguez, Valve Software <andresr@valvesoftware.com>
+    Pierre-Loup Griffais, Valve Software <pgriffais@valvesoftware.com>
+
+Contact
+
+    Andres Rodriguez, Valve Software <andresr@valvesoftware.com>
+
+Overview
+
+    In Vulkan 1.0.32 users can specify device-scope queue priorities. In
+	some cases it may be useful to extend this concept to a system-wide scope.
+
+	This extension provides a mechanism for caller's to set their system-wide
+    priority. The default queue priority is VK_QUEUE_GLOBAL_PRIORITY_NORMAL.
+
+	TODO: privileges required for priority escalation and note about system
+    resource starvation.
+
+New Object Types
+
+    VkQueueGlobalPriorityEXT
+		VK_STRUCTURE_TYPE_QUEUE_GLOBAL_PRIORITY_EXT
+
+New Enum Constants
+
+	None
+
+New Enums
+
+	VkQueueGlobalPriority
+		VK_QUEUE_GLOBAL_PRIORITY_HIGH
+		VK_QUEUE_GLOBAL_PRIORITY_NORMAL
+
+New Structs
+
+	typedef struct VkQueueGlobalPriorityEXT {
+		VkStructureType                         sType;
+		void*                                   pNext;
+		VkQueueGlobalPriority                   priority;
+	} VkQueueGlobalPriorityEXT;
+
+New Functions
+
+    None
+
+Description
+
+    TODO
+
+Issues
+
+	TODO
+
+References
+
+    [1]: https://github.com/KhronosGroup/Vulkan-Docs/tree/v1.0-core-20161025
+
+Version History
+
+    See git log for full history.
+
+    - Revision 1, 2017-01-01 (Andres Rodriguez)
+        - Initial draft

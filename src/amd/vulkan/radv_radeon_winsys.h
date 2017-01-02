@@ -69,6 +69,11 @@ enum ring_type {
 	RING_LAST,
 };
 
+enum ctx_priority {
+	CTX_PRIORITY_HIGH = 0,
+	CTX_PRIORITY_NORMAL
+};
+
 struct radeon_winsys_cs {
 	unsigned cdw;  /* Number of used dwords. */
 	unsigned max_dw; /* Maximum number of dwords. */
@@ -168,7 +173,8 @@ struct radeon_winsys {
 	void (*buffer_virtual_bind)(struct radeon_winsys_bo *parent,
 	                            uint64_t offset, uint64_t size,
 	                            struct radeon_winsys_bo *bo, uint64_t bo_offset);
-	struct radeon_winsys_ctx *(*ctx_create)(struct radeon_winsys *ws);
+	struct radeon_winsys_ctx *(*ctx_create)(struct radeon_winsys *ws,
+						enum ctx_priority priority);
 	void (*ctx_destroy)(struct radeon_winsys_ctx *ctx);
 
 	bool (*ctx_wait_idle)(struct radeon_winsys_ctx *ctx,
