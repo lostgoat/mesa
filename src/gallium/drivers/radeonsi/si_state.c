@@ -4563,9 +4563,9 @@ static void si_init_config(struct si_context *sctx)
 		if (sctx->b.chip_class >= GFX9) {
 			si_pm4_set_reg(pm4, R_00B41C_SPI_SHADER_PGM_RSRC3_HS, S_00B41C_CU_EN(0xffff));
 		} else {
-			si_pm4_set_reg(pm4, R_00B51C_SPI_SHADER_PGM_RSRC3_LS, S_00B51C_CU_EN(0xffff));
-			si_pm4_set_reg(pm4, R_00B41C_SPI_SHADER_PGM_RSRC3_HS, 0);
-			si_pm4_set_reg(pm4, R_00B31C_SPI_SHADER_PGM_RSRC3_ES, S_00B31C_CU_EN(0xffff));
+			si_pm4_set_reg(pm4, R_00B51C_SPI_SHADER_PGM_RSRC3_LS, S_00B51C_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
+			si_pm4_set_reg(pm4, R_00B41C_SPI_SHADER_PGM_RSRC3_HS, S_00B01C_WAVE_LIMIT(0x3F));
+			si_pm4_set_reg(pm4, R_00B31C_SPI_SHADER_PGM_RSRC3_ES, S_00B31C_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
 
 			/* If this is 0, Bonaire can hang even if GS isn't being used.
 			 * Other chips are unaffected. These are suboptimal values,
@@ -4575,7 +4575,7 @@ static void si_init_config(struct si_context *sctx)
 				       S_028A44_ES_VERTS_PER_SUBGRP(64) |
 				       S_028A44_GS_PRIMS_PER_SUBGRP(4));
 		}
-		si_pm4_set_reg(pm4, R_00B21C_SPI_SHADER_PGM_RSRC3_GS, S_00B21C_CU_EN(0xffff));
+		si_pm4_set_reg(pm4, R_00B21C_SPI_SHADER_PGM_RSRC3_GS, S_00B21C_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
 
 		if (sscreen->b.info.num_good_compute_units /
 		    (sscreen->b.info.max_se * sscreen->b.info.max_sh_per_se) <= 4) {
@@ -4585,7 +4585,7 @@ static void si_init_config(struct si_context *sctx)
 			 *
 			 * LATE_ALLOC_VS = 2 is the highest safe number.
 			 */
-			si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS, S_00B118_CU_EN(0xffff));
+			si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS, S_00B118_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
 			si_pm4_set_reg(pm4, R_00B11C_SPI_SHADER_LATE_ALLOC_VS, S_00B11C_LIMIT(2));
 		} else {
 			/* Set LATE_ALLOC_VS == 31. It should be less than
@@ -4593,11 +4593,11 @@ static void si_init_config(struct si_context *sctx)
 			 * - VS can't execute on CU0.
 			 * - If HS writes outputs to LDS, LS can't execute on CU0.
 			 */
-			si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS, S_00B118_CU_EN(0xfffe));
+			si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS, S_00B118_CU_EN(0xfffe) | S_00B01C_WAVE_LIMIT(0x3F));
 			si_pm4_set_reg(pm4, R_00B11C_SPI_SHADER_LATE_ALLOC_VS, S_00B11C_LIMIT(31));
 		}
 
-		si_pm4_set_reg(pm4, R_00B01C_SPI_SHADER_PGM_RSRC3_PS, S_00B01C_CU_EN(0xffff));
+		si_pm4_set_reg(pm4, R_00B01C_SPI_SHADER_PGM_RSRC3_PS, S_00B01C_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
 	}
 
 	if (sctx->b.chip_class >= VI) {
