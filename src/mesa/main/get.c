@@ -1934,6 +1934,12 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
    }
 }
 
+void GLAPIENTRY
+_mesa_GetUnsignedBytevEXT(GLenum pname, GLubyte *data)
+{
+
+}
+
 /**
  * Convert a GL texture binding enum such as GL_TEXTURE_BINDING_2D
  * into the corresponding Mesa texture target index.
@@ -2637,6 +2643,12 @@ _mesa_GetDoublei_v(GLenum pname, GLuint index, GLdouble *params)
    default:
       ;
    }
+}
+
+void GLAPIENTRY
+_mesa_GetUnsignedBytei_vEXT(GLenum target, GLuint index, GLubyte *data)
+{
+
 }
 
 void GLAPIENTRY
