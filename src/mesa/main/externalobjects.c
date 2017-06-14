@@ -21,24 +21,145 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "macros.h"
+#include "mtypes.h"
 #include "externalobjects.h"
+
+/**
+ * Allocate and initialize a new memory object.  But don't put it into the
+ * memory object hash table.
+ *
+ * Called via ctx->Driver.NewMemoryObject, unless overridden by a device
+ * driver.
+ *
+ * \return pointer to new memory object.
+ */
+static struct gl_memory_object *
+_mesa_new_memory_object(struct gl_context *ctx, GLuint name)
+{
+   struct gl_memory_object *obj;
+   (void) ctx;
+   obj = MALLOC_STRUCT(gl_memory_object);
+
+   _mesa_initialize_memory_object(ctx, obj, name);
+   return obj;
+}
+
+/**
+ * Delete a memory object.  Called via ctx->Driver.DeleteMemory().
+ * Not removed from hash table here.
+ */
+void
+_mesa_delete_memory_object(struct gl_context *ctx, struct gl_memory_object *mo)
+{
+   free(mo);
+}
+
+void
+_mesa_init_memory_object_functions(struct dd_function_table *driver)
+{
+   driver->NewMemoryObject = _mesa_new_memory_object;
+   driver->DeleteMemoryObject = _mesa_delete_memory_object;
+}
+
+/**
+ * Initialize a buffer object to default values.
+ */
+void
+_mesa_initialize_memory_object(struct gl_context *ctx,
+                               struct gl_memory_object *obj,
+                               GLuint name)
+{
+   memset(obj, 0, sizeof(struct gl_memory_object));
+   obj->Name = name;
+}
 
 void GLAPIENTRY
 _mesa_DeleteMemoryObjectsEXT(GLsizei n, const GLuint *memoryObjects)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
 
+   if (MESA_VERBOSE & (VERBOSE_API))
+      _mesa_debug(ctx, "glDeleteMemoryObjectsEXT(%d, %p)\n", n, memoryObjects);
+
+   if (n < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteMemoryObjects(n < 0)");
+      return;
+   }
+
+   if (!memoryObjects)
+      return;
+
+   _mesa_HashLockMutex(ctx->Shared->MemoryObjects);
+   for (i = 0; i < n; i++) {
+      if (memoryObjects[i] > 0) {
+         struct gl_memory_object *delObj
+            = _mesa_lookup_memory_object_locked(ctx, memoryObjects[i]);
+
+         if (delObj) {
+            _mesa_HashRemoveLocked(ctx->Shared->MemoryObjects, memoryObjects[i]);
+            ctx->Driver.DeleteMemoryObject(ctx, delObj);
+         }
+      }
+   }
+   _mesa_HashUnlockMutex(ctx->Shared->MemoryObjects);
 }
 
 GLboolean GLAPIENTRY
 _mesa_IsMemoryObjectEXT(GLuint memoryObject)
 {
-   return GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_memory_object *obj;
+
+   if (memoryObject == 0)
+      return GL_FALSE;
+
+   obj = _mesa_lookup_memory_object(ctx, memoryObject);
+
+   return obj ? GL_TRUE : GL_FALSE;
 }
 
 void GLAPIENTRY
 _mesa_CreateMemoryObjectsEXT(GLsizei n, GLuint *memoryObjects)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint first;
 
+   if (MESA_VERBOSE & (VERBOSE_API))
+      _mesa_debug(ctx, "glCreateMemoryObjectsEXT(%d, %p)", n, memoryObjects);
+
+   if (n < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCreateMemoryObjects(n < 0)");
+      return;
+   }
+
+   if (!memoryObjects)
+      return;
+
+   _mesa_HashLockMutex(ctx->Shared->MemoryObjects);
+   first = _mesa_HashFindFreeKeyBlock(ctx->Shared->MemoryObjects, n);
+   if (first) {
+      GLsizei i;
+      for (i = 0; i < n; i++) {
+         struct gl_memory_object *memObj;
+
+         memoryObjects[i] = first + i;
+
+         /* allocate memory object */
+         memObj = ctx->Driver.NewMemoryObject(ctx, memoryObjects[i]);
+         if (!memObj)
+            goto out_unlock;
+
+         /* insert into hash table */
+         _mesa_HashInsertLocked(ctx->Shared->MemoryObjects,
+                                memoryObjects[i],
+                                memObj);
+      }
+   }
+
+out_unlock:
+   _mesa_HashUnlockMutex(ctx->Shared->MemoryObjects);
 }
 
 void GLAPIENTRY
@@ -263,7 +384,25 @@ _mesa_ImportMemoryFdEXT(GLuint memory,
                         GLenum handleType,
                         GLint fd)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_memory_object *memObj;
 
+   if (handleType != GL_HANDLE_TYPE_OPAQUE_FD_EXT) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glImportMemoryFdEXT(handleType=%u)", handleType);
+      return;
+   }
+
+   if (memory == 0)
+      return;
+
+   memObj = _mesa_lookup_memory_object(ctx, memory);
+   if (!memObj) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glImportMemoryFdEXT(non-gen name)");
+      return;
+   }
+
+   ctx->Driver.ImportMemoryObjectFd(ctx, memObj, size, fd);
 }
 
 void GLAPIENTRY
