@@ -261,10 +261,26 @@ texstorage_memory(GLuint dims, GLenum target, GLsizei levels, GLenum internalFor
 
 static void
 texstorage_memory_ms(GLuint dims, GLenum target, GLsizei samples, GLenum internalFormat,
-                     GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations,
-                     GLuint memory, GLuint64 offset)
+                     GLsizei width, GLsizei height, GLsizei depth,
+                     GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset,
+                     const char* func)
 {
+   struct gl_texture_object *texObj;
+   struct gl_memory_object *memObj;
 
+   GET_CURRENT_CONTEXT(ctx);
+
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   if (!texObj)
+      return;
+
+   memObj = _mesa_lookup_memory_object(ctx, memory);
+   if (!memObj)
+      return;
+
+   _mesa_texture_storage_ms_memory(ctx, dims, texObj, memObj, target, samples,
+                                   internalFormat, width, height, depth,
+                                   fixedSampleLocations, offset, func);
 }
 
 /**
@@ -297,9 +313,24 @@ static void
 texturestorage_memory_ms(GLuint dims, GLuint texture, GLsizei samples,
                          GLenum internalFormat, GLsizei width, GLsizei height,
                          GLsizei depth, GLboolean fixedSampleLocations,
-                         GLuint memory, GLuint64 offset)
+                         GLuint memory, GLuint64 offset, const char* func)
 {
+   struct gl_texture_object *texObj;
+   struct gl_memory_object *memObj;
 
+   GET_CURRENT_CONTEXT(ctx);
+
+   texObj = _mesa_lookup_texture(ctx, texture);
+   if (!texObj)
+      return;
+
+   memObj = _mesa_lookup_memory_object(ctx, memory);
+   if (!memObj)
+      return;
+
+   _mesa_texture_storage_ms_memory(ctx, dims, texObj, memObj, texObj->Target,
+                                   samples, internalFormat, width, height,
+                                   depth, fixedSampleLocations, offset, func);
 }
 
 void GLAPIENTRY
@@ -324,7 +355,9 @@ _mesa_TexStorageMem2DMultisampleEXT(GLenum target,
                                     GLuint memory,
                                     GLuint64 offset)
 {
-   texstorage_memory_ms(2, target, samples, internalFormat, width, height, 1, fixedSampleLocations, memory, offset);
+   texstorage_memory_ms(2, target, samples, internalFormat, width, height, 1,
+                        fixedSampleLocations, memory, offset,
+                        "glTexStorageMem2DMultisampleEXT");
 }
 
 void GLAPIENTRY
@@ -351,7 +384,9 @@ _mesa_TexStorageMem3DMultisampleEXT(GLenum target,
                                     GLuint memory,
                                     GLuint64 offset)
 {
-   texstorage_memory_ms(3, target, samples, internalFormat, width, height, depth, fixedSampleLocations, memory, offset);
+   texstorage_memory_ms(3, target, samples, internalFormat, width, height, depth,
+                        fixedSampleLocations, memory, offset,
+                        "glTexStorageMem3DMultisampleEXT");
 }
 
 void GLAPIENTRY
@@ -385,7 +420,9 @@ _mesa_TextureStorageMem2DMultisampleEXT(GLuint texture,
                                         GLuint memory,
                                         GLuint64 offset)
 {
-   texturestorage_memory_ms(2, texture, samples, internalFormat, width, height, 1, fixedSampleLocations, memory, offset);
+   texturestorage_memory_ms(2, texture, samples, internalFormat, width, height, 1,
+                            fixedSampleLocations, memory, offset,
+                            "glTextureStorageMem2DMultisampleEXT");
 }
 
 void GLAPIENTRY
@@ -412,7 +449,9 @@ _mesa_TextureStorageMem3DMultisampleEXT(GLuint texture,
                                         GLuint memory,
                                         GLuint64 offset)
 {
-   texturestorage_memory_ms(3, texture, samples, internalFormat, width, height, depth, fixedSampleLocations, memory, offset);
+   texturestorage_memory_ms(3, texture, samples, internalFormat, width, height, depth,
+                            fixedSampleLocations, memory, offset,
+                            "glTextureStorageMem3DMultisampleEXT");
 }
 
 void GLAPIENTRY
