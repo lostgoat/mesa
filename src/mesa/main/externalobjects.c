@@ -72,6 +72,8 @@ _mesa_initialize_memory_object(struct gl_context *ctx,
 {
    memset(obj, 0, sizeof(struct gl_memory_object));
    obj->Name = name;
+   obj->Dedicated = GL_FALSE;
+   obj->Protected = GL_FALSE;
 }
 
 void GLAPIENTRY
@@ -143,7 +145,6 @@ _mesa_CreateMemoryObjectsEXT(GLsizei n, GLuint *memoryObjects)
       GLsizei i;
       for (i = 0; i < n; i++) {
          struct gl_memory_object *memObj;
-
          memoryObjects[i] = first + i;
 
          /* allocate memory object */
@@ -167,7 +168,35 @@ _mesa_MemoryObjectParameterivEXT(GLuint memoryObject,
                                  GLenum pname,
                                  const GLint *params)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_memory_object *memObj;
 
+   memObj = _mesa_lookup_memory_object(ctx, memoryObject);
+   if (!memObj)
+      return;
+
+   if (memObj->Immutable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMemoryObjectParameterivEXT(memoryObject is immutable");
+      return;
+   }
+
+   switch (pname) {
+   case GL_DEDICATED_MEMORY_OBJECT_EXT:
+      memObj->Dedicated = (GLboolean) params[0];
+      break;
+   case GL_PROTECTED_MEMORY_OBJECT_EXT:
+      /* EXT_protected_textures not supported */
+      goto invalid_pname;
+   default:
+      goto invalid_pname;
+   }
+   return;
+
+invalid_pname:
+   _mesa_error(ctx, GL_INVALID_ENUM,
+               "glMemoryObjectParameterivEXT(pname=0x%x)",
+               pname);
 }
 
 void GLAPIENTRY
@@ -175,7 +204,29 @@ _mesa_GetMemoryObjectParameterivEXT(GLuint memoryObject,
                                     GLenum pname,
                                     GLint *params)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_memory_object *memObj;
 
+   memObj = _mesa_lookup_memory_object(ctx, memoryObject);
+   if (!memObj)
+      return;
+
+   switch (pname) {
+      case GL_DEDICATED_MEMORY_OBJECT_EXT:
+         *params = (GLint) memObj->Dedicated;
+         break;
+      case GL_PROTECTED_MEMORY_OBJECT_EXT:
+         /* EXT_protected_textures not supported */
+         goto invalid_pname;
+      default:
+         goto invalid_pname;
+   }
+   return;
+
+invalid_pname:
+   _mesa_error(ctx, GL_INVALID_ENUM,
+               "glMemoryObjectParameterivEXT(pname=0x%x)",
+               pname);
 }
 
 void GLAPIENTRY
@@ -403,6 +454,7 @@ _mesa_ImportMemoryFdEXT(GLuint memory,
    }
 
    ctx->Driver.ImportMemoryObjectFd(ctx, memObj, size, fd);
+   memObj->Immutable = GL_TRUE;
 }
 
 void GLAPIENTRY
