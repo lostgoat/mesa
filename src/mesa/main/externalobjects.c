@@ -390,15 +390,6 @@ _mesa_TexStorageMem3DMultisampleEXT(GLenum target,
 }
 
 void GLAPIENTRY
-_mesa_BufferStorageMemEXT(GLenum target,
-                          GLsizeiptr size,
-                          GLuint memory,
-                          GLuint64 offset)
-{
-
-}
-
-void GLAPIENTRY
 _mesa_TextureStorageMem2DEXT(GLuint texture,
                              GLsizei levels,
                              GLenum internalFormat,
@@ -452,15 +443,6 @@ _mesa_TextureStorageMem3DMultisampleEXT(GLuint texture,
    texturestorage_memory_ms(3, texture, samples, internalFormat, width, height, depth,
                             fixedSampleLocations, memory, offset,
                             "glTextureStorageMem3DMultisampleEXT");
-}
-
-void GLAPIENTRY
-_mesa_NamedBufferStorageMemEXT(GLuint buffer,
-                               GLsizeiptr size,
-                               GLuint memory,
-                               GLuint64 offset)
-{
-
 }
 
 void GLAPIENTRY
