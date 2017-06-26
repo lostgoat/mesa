@@ -108,7 +108,7 @@
         <param name="offset" type="GLuint64"/>
     </function>
 
-    <function name="BufferStorageMemEXT" es2="3.2">
+    <function name="BufferStorageMemEXT" es2="3.2" no_error="true">
         <param name="target" type="GLenum"/>
         <param name="size" type="GLsizeiptr"/>
         <param name="memory" type="GLuint"/>
@@ -159,7 +159,7 @@
         <param name="offset" type="GLuint64"/>
     </function>
 
-    <function name="NamedBufferStorageMemEXT" es2="3.2">
+    <function name="NamedBufferStorageMemEXT" es2="3.2" no_error="true">
         <param name="buffer" type="GLuint"/>
         <param name="size" type="GLsizeiptr"/>
         <param name="memory" type="GLuint"/>
