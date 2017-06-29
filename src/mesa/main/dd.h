@@ -1108,6 +1108,12 @@ struct dd_function_table {
                               GLenum usage,
                               struct gl_buffer_object *bufObj);
 
+   /**
+    * Fill uuid with an unique identifier for this driver
+    *
+    * uuid must point to UUID_SIZE_EXT bytes of available memory
+    */
+   void (*GetUuid)(struct gl_context *ctx, char *uuid);
    /*@}*/
 
    /**
