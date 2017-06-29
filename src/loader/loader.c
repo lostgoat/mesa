@@ -307,6 +307,14 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
    return 0;
 }
 
+char *
+loader_get_id_path_tag_for_fd(int fd)
+{
+#if HAVE_LIBDRM
+   return drm_get_id_path_tag_for_fd(fd);
+#endif
+   return NULL;
+}
 
 #if defined(HAVE_LIBDRM)
 static char *

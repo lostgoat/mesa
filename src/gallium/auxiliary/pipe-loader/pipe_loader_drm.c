@@ -39,6 +39,7 @@
 #include "target-helpers/drm_helper_public.h"
 #include "state_tracker/drm_driver.h"
 #include "pipe_loader_priv.h"
+#include "pipe/p_screen.h"
 
 #include "util/u_memory.h"
 #include "util/u_dl.h"
@@ -283,9 +284,17 @@ pipe_loader_drm_configuration(struct pipe_loader_device *dev,
 static struct pipe_screen *
 pipe_loader_drm_create_screen(struct pipe_loader_device *dev, unsigned flags)
 {
+   char *tag;
    struct pipe_loader_drm_device *ddev = pipe_loader_drm_device(dev);
+   struct pipe_screen * screen = ddev->dd->create_screen(ddev->fd, flags);
 
-   return ddev->dd->create_screen(ddev->fd, flags);
+   tag = loader_get_id_path_tag_for_fd(ddev->fd);
+   if (tag && screen) {
+      strncpy(screen->uuid, tag, sizeof(screen->uuid));
+      free(tag);
+   }
+
+   return screen;
 }
 
 static const struct pipe_loader_ops pipe_loader_drm_ops = {

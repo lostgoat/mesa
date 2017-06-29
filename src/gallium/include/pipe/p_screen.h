@@ -67,6 +67,8 @@ struct disk_cache;
  * context.
  */
 struct pipe_screen {
+   char uuid[PIPE_UUID_SIZE];
+
    void (*destroy)( struct pipe_screen * );
 
    const char *(*get_name)( struct pipe_screen * );

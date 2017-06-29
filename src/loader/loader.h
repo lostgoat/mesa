@@ -47,6 +47,9 @@ loader_get_driver_for_fd(int fd);
 char *
 loader_get_device_name_for_fd(int fd);
 
+char *
+loader_get_id_path_tag_for_fd(int fd);
+
 /* Function to get a different device than the one we are to use by default,
  * if the user requests so and it is possible. The initial fd will be closed
  * if necessary. The returned fd is potentially a render-node.
