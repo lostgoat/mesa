@@ -44,6 +44,7 @@
 #include "sid.h"
 #include "gfx9d.h"
 #include "util/debug.h"
+#include "loader/loader.h"
 
 static int
 radv_device_get_cache_uuid(enum radeon_family family, void *uuid)
@@ -63,12 +64,13 @@ radv_device_get_cache_uuid(enum radeon_family family, void *uuid)
 }
 
 static void
-radv_get_device_uuid(drmDevicePtr device, void *uuid) {
+radv_get_device_uuid(int fd, void *uuid) {
+	char *tag = loader_get_id_path_tag_for_fd(fd);
 	memset(uuid, 0, VK_UUID_SIZE);
-	memcpy((char*)uuid + 0, &device->businfo.pci->domain, 2);
-	memcpy((char*)uuid + 2, &device->businfo.pci->bus, 1);
-	memcpy((char*)uuid + 3, &device->businfo.pci->dev, 1);
-	memcpy((char*)uuid + 4, &device->businfo.pci->func, 1);
+	if (tag) {
+		strncpy(uuid, tag, VK_UUID_SIZE);
+		free(tag);
+	}
 }
 
 static const VkExtensionProperties instance_extensions[] = {
@@ -303,7 +305,7 @@ radv_physical_device_init(struct radv_physical_device *device,
 	fprintf(stderr, "WARNING: radv is not a conformant vulkan implementation, testing use only.\n");
 	device->name = get_chip_name(device->rad_info.family);
 
-	radv_get_device_uuid(drm_device, device->device_uuid);
+	radv_get_device_uuid(fd, device->device_uuid);
 
 	if (device->rad_info.family == CHIP_STONEY ||
 	    device->rad_info.chip_class >= GFX9) {

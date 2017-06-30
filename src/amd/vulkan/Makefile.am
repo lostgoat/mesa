@@ -67,6 +67,7 @@ VULKAN_LIB_DEPS = \
 	$(top_builddir)/src/amd/addrlib/libamdgpu_addrlib.la \
 	$(top_builddir)/src/compiler/nir/libnir.la \
 	$(top_builddir)/src/util/libmesautil.la \
+	$(top_builddir)/src/loader/libloader.la \
 	$(LLVM_LIBS) \
 	$(LIBELF_LIBS) \
 	$(PTHREAD_LIBS) \
