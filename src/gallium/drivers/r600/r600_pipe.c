@@ -296,6 +296,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_MUL_ZERO_WINS:
 	case PIPE_CAP_CAN_BIND_CONST_BUFFER_AS_VERTEX:
 	case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
+   case PIPE_CAP_MEMOBJ:
 		return 1;
 
 	case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
@@ -398,7 +399,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
 	case PIPE_CAP_POST_DEPTH_COVERAGE:
 	case PIPE_CAP_BINDLESS_TEXTURE:
-   case PIPE_CAP_MEMOBJ:
 		return 0;
 
 	case PIPE_CAP_DOUBLES:
