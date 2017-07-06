@@ -895,6 +895,18 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 	return rscreen->renderer_string;
 }
 
+static void r600_get_driver_uuid(struct pipe_screen *pscreen, char *uuid)
+{
+	ac_compute_driver_uuid(uuid, PIPE_UUID_SIZE);
+}
+
+static void r600_get_device_uuid(struct pipe_screen *pscreen, char *uuid)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen *)pscreen;
+
+	ac_compute_device_uuid(&rscreen->info, uuid, PIPE_UUID_SIZE);
+}
+
 static float r600_get_paramf(struct pipe_screen* pscreen,
 			     enum pipe_capf param)
 {
@@ -1355,6 +1367,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.get_name = r600_get_name;
 	rscreen->b.get_vendor = r600_get_vendor;
 	rscreen->b.get_device_vendor = r600_get_device_vendor;
+	rscreen->b.get_device_uuid = r600_get_device_uuid;
+	rscreen->b.get_driver_uuid = r600_get_driver_uuid;
 	rscreen->b.get_disk_shader_cache = r600_get_disk_shader_cache;
 	rscreen->b.get_compute_param = r600_get_compute_param;
 	rscreen->b.get_paramf = r600_get_paramf;
