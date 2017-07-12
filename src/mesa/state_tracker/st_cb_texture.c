@@ -2647,16 +2647,11 @@ st_finalize_texture(struct gl_context *ctx,
    return GL_TRUE;
 }
 
-
-/**
- * Called via ctx->Driver.AllocTextureStorage() to allocate texture memory
- * for a whole mipmap stack.
- */
 static GLboolean
-st_AllocTextureStorage(struct gl_context *ctx,
-                       struct gl_texture_object *texObj,
-                       GLsizei levels, GLsizei width,
-                       GLsizei height, GLsizei depth)
+st_texture_storage(struct gl_context *ctx,
+                   struct gl_texture_object *texObj,
+                   GLsizei levels, GLsizei width,
+                   GLsizei height, GLsizei depth)
 {
    const GLuint numFaces = _mesa_num_tex_faces(texObj->Target);
    struct gl_texture_image *texImage = texObj->Image[0][0];
@@ -2731,6 +2726,20 @@ st_AllocTextureStorage(struct gl_context *ctx,
    stObj->validated_last_level = levels - 1;
 
    return GL_TRUE;
+}
+
+/**
+ * Called via ctx->Driver.AllocTextureStorage() to allocate texture memory
+ * for a whole mipmap stack.
+ */
+static GLboolean
+st_AllocTextureStorage(struct gl_context *ctx,
+                       struct gl_texture_object *texObj,
+                       GLsizei levels, GLsizei width,
+                       GLsizei height, GLsizei depth)
+{
+   return st_texture_storage(ctx, texObj, levels,
+                             width, height, depth);
 }
 
 
