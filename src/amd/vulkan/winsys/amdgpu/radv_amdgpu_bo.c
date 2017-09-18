@@ -330,6 +330,8 @@ radv_amdgpu_winsys_bo_create(struct radeon_winsys *_ws,
 		request.flags |= AMDGPU_GEM_CREATE_NO_CPU_ACCESS;
 	if (flags & RADEON_FLAG_GTT_WC)
 		request.flags |= AMDGPU_GEM_CREATE_CPU_GTT_USWC;
+	if (!(flags & RADEON_FLAG_IMPLICIT_SYNC))
+		request.flags |= AMDGPU_GEM_CREATE_EXPLICIT_SYNC;
 
 	r = amdgpu_bo_alloc(ws->dev, &request, &buf_handle);
 	if (r) {
