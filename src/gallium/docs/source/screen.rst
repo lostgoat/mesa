@@ -412,6 +412,8 @@ The integer capabilities:
   priorities, this returns a bitmask of PIPE_CONTEXT_PRIORITY_x for the
   supported priority levels.  A driver that does not support prioritized
   contexts can return 0.
+* ``PIPE_CAP_SEMAPHORE_SIGNAL``: True if the driver supports signaling semaphores
+  using semaphore_server_signal().
 
 
 .. _pipe_capf:
