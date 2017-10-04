@@ -417,7 +417,7 @@ The integer capabilities:
 * ``PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET``:
   Whether pipe_vertex_buffer::buffer_offset is treated as signed. The u_vbuf
   module needs this for optimal performance in workstation applications.
-
+* ``PIPE_CAP_SEMAPHORE``: True if the driver supports semaphore objects
 
 .. _pipe_capf:
 
