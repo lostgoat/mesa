@@ -170,6 +170,9 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* memory objects */
    _mesa_init_memory_object_functions(driver);
 
+   /* semaphore objects */
+   _mesa_init_semaphore_object_functions(driver);
+
    driver->NewFramebuffer = _mesa_new_framebuffer;
    driver->NewRenderbuffer = _swrast_new_soft_renderbuffer;
    driver->MapRenderbuffer = _swrast_map_soft_renderbuffer;
