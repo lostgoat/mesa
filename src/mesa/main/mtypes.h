@@ -3282,6 +3282,8 @@ struct gl_shared_state
    /** EXT_external_objects */
    struct _mesa_HashTable *MemoryObjects;
 
+   /** EXT_semaphore */
+   struct _mesa_HashTable *SemaphoreObjects;
 };
 
 
@@ -4647,6 +4649,11 @@ struct gl_memory_object
    GLuint Name;            /**< hash table ID/name */
    GLboolean Immutable;    /**< denotes mutability state of parameters */
    GLboolean Dedicated;    /**< import memory from a dedicated allocation */
+};
+
+struct gl_semaphore_object
+{
+   GLuint Name;            /**< hash table ID/name */
 };
 
 /**
