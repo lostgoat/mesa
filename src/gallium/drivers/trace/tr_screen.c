@@ -560,6 +560,43 @@ trace_screen_memobj_destroy(struct pipe_screen *_screen,
    screen->memobj_destroy(screen, memobj);
 }
 
+/********************************************************************
+ * semobj
+ */
+
+static struct pipe_semaphore_object *
+trace_screen_semobj_create_from_fd(struct pipe_screen *_screen,
+                                   int fd)
+{
+   struct pipe_screen *screen = trace_screen(_screen)->screen;
+
+   trace_dump_call_begin("pipe_screen", "semobj_create_from_fd");
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(int, fd);
+
+   struct pipe_semaphore_object *res =
+      screen->semobj_create_from_fd(screen, fd);
+
+   trace_dump_ret(ptr, res);
+   trace_dump_call_end();
+
+   return res;
+}
+
+static void
+trace_screen_semobj_destroy(struct pipe_screen *_screen,
+                            struct pipe_semaphore_object *semobj)
+{
+   struct pipe_screen *screen = trace_screen(_screen)->screen;
+
+   trace_dump_call_begin("pipe_screen", "semobj_destroy");
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, semobj);
+
+   screen->semobj_destroy(screen, semobj);
+
+   trace_dump_call_end();
+}
 
 /********************************************************************
  * screen
@@ -655,6 +692,8 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.fence_finish = trace_screen_fence_finish;
    SCR_INIT(memobj_create_from_handle);
    SCR_INIT(memobj_destroy);
+   SCR_INIT(semobj_create_from_fd);
+   SCR_INIT(semobj_destroy);
    tr_scr->base.flush_frontbuffer = trace_screen_flush_frontbuffer;
    tr_scr->base.get_timestamp = trace_screen_get_timestamp;
    SCR_INIT(get_driver_uuid);

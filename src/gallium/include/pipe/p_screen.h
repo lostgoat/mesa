@@ -412,6 +412,28 @@ struct pipe_screen {
                                                   uint64_t offset);
 
    /**
+    * Create a semaphore object from a file descriptor
+    *
+    * The underlying primitive is often allocated by a foreign API, then
+    * exported through interfaces compatible with EXT_semaphore.
+    *
+    * Note: the caller retains ownership of fd.
+    *
+    * \param fd  A file descriptor representing the semaphore object to import
+    */
+   struct pipe_semaphore_object *(*semobj_create_from_fd)(struct pipe_screen *screen,
+                                                          int fd);
+
+
+   /**
+    * Destroy a semaphore object
+    *
+    * \param semobj  The semaphore object to destroy
+    */
+   void (*semobj_destroy)(struct pipe_screen *screen,
+                          struct pipe_semaphore_object *semobj);
+
+   /**
     * Fill @uuid with a unique driver identifier
     *
     * \param uuid    pointer to a memory region of PIPE_UUID_SIZE bytes
