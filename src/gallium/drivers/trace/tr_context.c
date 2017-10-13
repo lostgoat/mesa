@@ -1810,6 +1810,40 @@ static void trace_context_make_image_handle_resident(struct pipe_context *_pipe,
    pipe->make_image_handle_resident(pipe, handle, access, resident);
 }
 
+/********************************************************************
+ * Semaphores
+ */
+
+static void
+trace_context_semobj_wait(struct pipe_context *_pipe,
+                          struct pipe_semaphore_object *semobj)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "semobj_wait");
+   trace_dump_arg(ptr, _pipe);
+   trace_dump_arg(ptr, semobj);
+   trace_dump_call_end();
+
+   pipe->semobj_wait(pipe, semobj);
+}
+
+static void
+trace_context_semobj_signal(struct pipe_context *_pipe,
+                            struct pipe_semaphore_object *semobj)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "semobj_signal");
+   trace_dump_arg(ptr, _pipe);
+   trace_dump_arg(ptr, semobj);
+   trace_dump_call_end();
+
+   pipe->semobj_signal(pipe, semobj);
+}
+
 struct pipe_context *
 trace_context_create(struct trace_screen *tr_scr,
                      struct pipe_context *pipe)
@@ -1917,6 +1951,8 @@ trace_context_create(struct trace_screen *tr_scr,
    TR_CTX_INIT(create_image_handle);
    TR_CTX_INIT(delete_image_handle);
    TR_CTX_INIT(make_image_handle_resident);
+   TR_CTX_INIT(semobj_wait);
+   TR_CTX_INIT(semobj_signal);
 
    TR_CTX_INIT(transfer_map);
    TR_CTX_INIT(transfer_unmap);

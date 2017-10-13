@@ -663,6 +663,27 @@ dd_context_texture_subdata(struct pipe_context *_pipe,
                          stride, layer_stride);
 }
 
+/********************************************************************
+ * Semaphores
+ */
+
+static void
+dd_context_semobj_wait(struct pipe_context *_pipe,
+                       struct pipe_semaphore_object *semobj)
+{
+   struct pipe_context *pipe = dd_context(_pipe)->pipe;
+
+   pipe->semobj_wait(pipe, semobj);
+}
+
+static void
+dd_context_semobj_signal(struct pipe_context *_pipe,
+                         struct pipe_semaphore_object *semobj)
+{
+   struct pipe_context *pipe = dd_context(_pipe)->pipe;
+
+   pipe->semobj_signal(pipe, semobj);
+}
 
 /********************************************************************
  * miscellaneous
@@ -912,6 +933,8 @@ dd_context_create(struct dd_screen *dscreen, struct pipe_context *pipe)
    CTX_INIT(create_image_handle);
    CTX_INIT(delete_image_handle);
    CTX_INIT(make_image_handle_resident);
+   CTX_INIT(semobj_wait);
+   CTX_INIT(semobj_signal);
 
    dd_init_draw_functions(dctx);
 

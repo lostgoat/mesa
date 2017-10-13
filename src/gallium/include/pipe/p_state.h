@@ -906,6 +906,14 @@ struct pipe_memory_object
    bool dedicated;
 };
 
+/**
+ * Structure that contains information about semaphores
+ */
+struct pipe_semaphore_object
+{
+   bool imported;
+};
+
 #ifdef __cplusplus
 }
 #endif

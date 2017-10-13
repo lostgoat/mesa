@@ -367,6 +367,29 @@ dd_screen_memobj_destroy(struct pipe_screen *_screen,
 
    screen->memobj_destroy(screen, memobj);
 }
+
+/********************************************************************
+ * memobj
+ */
+
+static struct pipe_semaphore_object *
+dd_screen_semobj_create_from_fd(struct pipe_screen *_screen,
+                                int fd)
+{
+   struct pipe_screen *screen = dd_screen(_screen)->screen;
+
+   return screen->semobj_create_from_fd(screen, fd);
+}
+
+static void
+dd_screen_semobj_destroy(struct pipe_screen *_screen,
+                         struct pipe_semaphore_object *semobj)
+{
+   struct pipe_screen *screen = dd_screen(_screen)->screen;
+
+   screen->semobj_destroy(screen, semobj);
+}
+
 /********************************************************************
  * screen
  */
@@ -486,6 +509,8 @@ ddebug_screen_create(struct pipe_screen *screen)
    SCR_INIT(fence_finish);
    SCR_INIT(memobj_create_from_handle);
    SCR_INIT(memobj_destroy);
+   SCR_INIT(semobj_create_from_fd);
+   SCR_INIT(semobj_destroy);
    SCR_INIT(get_driver_query_info);
    SCR_INIT(get_driver_query_group_info);
    SCR_INIT(get_compiler_options);

@@ -61,6 +61,7 @@ struct pipe_resource;
 struct pipe_sampler_state;
 struct pipe_sampler_view;
 struct pipe_scissor_state;
+struct pipe_semaphore_object;
 struct pipe_shader_buffer;
 struct pipe_shader_state;
 struct pipe_stencil_ref;
@@ -839,6 +840,31 @@ struct pipe_context {
     */
    void (*make_image_handle_resident)(struct pipe_context *ctx, uint64_t handle,
                                       unsigned access, bool resident);
+
+   /**
+    * Wait for a semaphore object
+    *
+    * Emit a wait operation for the specified semaphore. After the wait
+    * completes, the semaphore will return to the unsignaled state.
+    *
+    * Waiting on a semaphore that has no current signal operation associated
+    * with it (from the GL client or an external semaphore signaler) results
+    * in undefined behaviour.
+    *
+    * \param semobj  The semaphore object to wait upon
+    */
+   void (*semobj_wait)(struct pipe_context *ctx,
+                       struct pipe_semaphore_object *semobj);
+
+   /**
+    * Signal a semaphore object
+    *
+    * Emit a signal operation for the specified semaphore.
+    *
+    * \param semobj  The semaphore object to signal
+    */
+   void (*semobj_signal)(struct pipe_context *ctx,
+                         struct pipe_semaphore_object *semobj);
 };
 
 
