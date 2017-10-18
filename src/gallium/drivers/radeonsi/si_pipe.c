@@ -579,6 +579,9 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 			return RADEON_SPARSE_PAGE_SIZE;
 		return 0;
 
+	case PIPE_CAP_SEMAPHORE:
+		return sscreen->b.info.has_syncobj;
+
 	/* Unsupported features. */
 	case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
@@ -596,7 +599,6 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_POST_DEPTH_COVERAGE:
 	case PIPE_CAP_TILE_RASTER_ORDER:
 	case PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES:
-	case PIPE_CAP_SEMAPHORE:
 		return 0;
 
 	case PIPE_CAP_NATIVE_FENCE_FD:
