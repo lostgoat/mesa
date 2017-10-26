@@ -1636,6 +1636,29 @@ tc_texture_subdata(struct pipe_context *_pipe,
    }
 }
 
+/********************************************************************
+ * Semaphores
+ */
+
+static void
+tc_semobj_wait(struct pipe_context *_pipe,
+               struct pipe_semaphore_object *semobj)
+{
+   struct threaded_context *tc = threaded_context(_pipe);
+   struct pipe_context *pipe = tc->pipe;
+
+   pipe->semobj_wait(pipe, semobj);
+}
+
+static void
+tc_semobj_signal(struct pipe_context *_pipe,
+                 struct pipe_semaphore_object *semobj)
+{
+   struct threaded_context *tc = threaded_context(_pipe);
+   struct pipe_context *pipe = tc->pipe;
+
+   pipe->semobj_signal(pipe, semobj);
+}
 
 /********************************************************************
  * miscellaneous
@@ -2451,6 +2474,8 @@ threaded_context_create(struct pipe_context *pipe,
    CTX_INIT(create_image_handle);
    CTX_INIT(delete_image_handle);
    CTX_INIT(make_image_handle_resident);
+   CTX_INIT(semobj_wait);
+   CTX_INIT(semobj_signal);
 #undef CTX_INIT
 
    if (out)
