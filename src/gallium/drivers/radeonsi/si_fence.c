@@ -360,6 +360,54 @@ static int si_fence_get_fd(struct pipe_screen *screen,
 	return gfx_fd;
 }
 
+static struct pipe_semaphore_object *
+si_semobj_create_from_fd(struct pipe_screen *screen, int fd)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_semaphore_object *semobj = CALLOC_STRUCT(r600_semaphore_object);
+	struct pipe_fence_handle *syncobj;
+
+	if (!semobj)
+		return NULL;
+
+	syncobj = rscreen->ws->fence_import_syncobj(rscreen->ws, fd);
+	if (!syncobj) {
+		free(semobj);
+		return NULL;
+	}
+
+	semobj->syncobj = syncobj;
+
+	return (struct pipe_semaphore_object *)semobj;
+}
+
+static void si_semobj_destroy(struct pipe_screen *screen,
+			      struct pipe_semaphore_object *semobj)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_semaphore_object *rsemobj = (struct r600_semaphore_object *) semobj;
+
+	rscreen->ws->fence_reference(&rsemobj->syncobj, NULL);
+	free(semobj);
+}
+
+static void si_semobj_wait(struct pipe_context *ctx,
+			   struct pipe_semaphore_object *semobj)
+{
+	struct r600_semaphore_object *rsemobj = (struct r600_semaphore_object *) semobj;
+
+	si_fence_server_sync(ctx, rsemobj->syncobj);
+}
+
+static void si_semobj_signal(struct pipe_context *ctx,
+			     struct pipe_semaphore_object *semobj)
+{
+	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
+	struct r600_semaphore_object *rsemobj = (struct r600_semaphore_object *) semobj;
+
+	rctx->ws->cs_add_syncobj_signal(rctx->gfx.cs, rsemobj->syncobj);
+}
+
 static void si_flush_from_st(struct pipe_context *ctx,
 			     struct pipe_fence_handle **fence,
 			     unsigned flags)
@@ -457,6 +505,8 @@ void si_init_fence_functions(struct si_context *ctx)
 	ctx->b.b.flush = si_flush_from_st;
 	ctx->b.b.create_fence_fd = si_create_fence_fd;
 	ctx->b.b.fence_server_sync = si_fence_server_sync;
+	ctx->b.b.semobj_wait = si_semobj_wait;
+	ctx->b.b.semobj_signal = si_semobj_signal;
 }
 
 void si_init_screen_fence_functions(struct si_screen *screen)
@@ -464,4 +514,6 @@ void si_init_screen_fence_functions(struct si_screen *screen)
 	screen->b.b.fence_finish = si_fence_finish;
 	screen->b.b.fence_reference = si_fence_reference;
 	screen->b.b.fence_get_fd = si_fence_get_fd;
+	screen->b.b.semobj_create_from_fd = si_semobj_create_from_fd;
+	screen->b.b.semobj_destroy = si_semobj_destroy;
 }
