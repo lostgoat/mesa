@@ -404,6 +404,11 @@ struct r600_memory_object {
 	uint32_t			offset;
 };
 
+struct r600_semaphore_object {
+	struct pipe_semaphore_object	b;
+	struct pipe_fence_handle	*syncobj;
+};
+
 struct r600_common_screen {
 	struct pipe_screen		b;
 	struct radeon_winsys		*ws;

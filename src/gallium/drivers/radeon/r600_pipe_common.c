@@ -421,6 +421,54 @@ static int r600_fence_get_fd(struct pipe_screen *screen,
 	return gfx_fd;
 }
 
+static struct pipe_semaphore_object *
+si_semobj_create_from_fd(struct pipe_screen *screen, int fd)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_semaphore_object *semobj = CALLOC_STRUCT(r600_semaphore_object);
+	struct pipe_fence_handle *syncobj;
+
+	if (!semobj)
+		return NULL;
+
+	syncobj = rscreen->ws->fence_import_syncobj(rscreen->ws, fd);
+	if (!syncobj) {
+		free(semobj);
+		return NULL;
+	}
+
+	semobj->syncobj = syncobj;
+
+	return (struct pipe_semaphore_object *)semobj;
+}
+
+static void si_semobj_destroy(struct pipe_screen *screen,
+			      struct pipe_semaphore_object *semobj)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_semaphore_object *rsemobj = (struct r600_semaphore_object *) semobj;
+
+	rscreen->ws->fence_reference(&rsemobj->syncobj, NULL);
+	free(semobj);
+}
+
+static void si_semobj_wait(struct pipe_context *ctx,
+			   struct pipe_semaphore_object *semobj)
+{
+	struct r600_semaphore_object *rsemobj = (struct r600_semaphore_object *) semobj;
+
+	r600_fence_server_sync(ctx, rsemobj->syncobj);
+}
+
+static void si_semobj_signal(struct pipe_context *ctx,
+			     struct pipe_semaphore_object *semobj)
+{
+	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
+	struct r600_semaphore_object *rsemobj = (struct r600_semaphore_object *) semobj;
+
+	rctx->ws->cs_add_syncobj_signal(rctx->gfx.cs, rsemobj->syncobj);
+}
+
 static void r600_flush_from_st(struct pipe_context *ctx,
 			       struct pipe_fence_handle **fence,
 			       unsigned flags)
@@ -701,6 +749,8 @@ bool si_common_context_init(struct r600_common_context *rctx,
 	rctx->b.fence_server_sync = r600_fence_server_sync;
 	rctx->dma_clear_buffer = r600_dma_clear_buffer_fallback;
 	rctx->b.buffer_subdata = si_buffer_subdata;
+	rctx->b.semobj_wait = si_semobj_wait;
+	rctx->b.semobj_signal = si_semobj_signal;
 
 	if (rscreen->info.drm_major == 2 && rscreen->info.drm_minor >= 43) {
 		rctx->b.get_device_reset_status = r600_get_reset_status;
@@ -1367,6 +1417,8 @@ bool si_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.resource_from_user_memory = si_buffer_from_user_memory;
 	rscreen->b.query_memory_info = r600_query_memory_info;
 	rscreen->b.fence_get_fd = r600_fence_get_fd;
+	rscreen->b.semobj_create_from_fd = si_semobj_create_from_fd;
+	rscreen->b.semobj_destroy = si_semobj_destroy;
 
 	if (rscreen->info.has_hw_decode) {
 		rscreen->b.get_video_param = si_vid_get_video_param;
