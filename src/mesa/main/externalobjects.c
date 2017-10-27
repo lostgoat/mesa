@@ -23,6 +23,7 @@
 
 #include "macros.h"
 #include "mtypes.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "externalobjects.h"
 #include "teximage.h"
@@ -744,7 +745,7 @@ _mesa_WaitSemaphoreEXT(GLuint semaphore,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_semaphore_object *semObj;
-
+   struct gl_buffer_object **bufObjs;
 
    if (!ctx->Extensions.EXT_semaphore) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glWaitSemaphoreEXT(unsupported)");
@@ -757,8 +758,14 @@ _mesa_WaitSemaphoreEXT(GLuint semaphore,
    if (!semObj)
       return;
 
-   /* TODO: memory barriers and layout transitions */
-   ctx->Driver.ServerWaitSemaphoreObject(ctx, semObj);
+   bufObjs = alloca(sizeof(struct gl_buffer_object **) * numBufferBarriers);
+   for (unsigned i = 0; i < numBufferBarriers; i++) {
+      bufObjs[i] = _mesa_lookup_bufferobj(ctx, buffers[i]);
+   }
+
+   /* TODO: layout transitions */
+   ctx->Driver.ServerWaitSemaphoreObject(ctx, semObj,
+                                         numBufferBarriers, bufObjs);
 }
 
 void GLAPIENTRY
@@ -771,6 +778,7 @@ _mesa_SignalSemaphoreEXT(GLuint semaphore,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_semaphore_object *semObj;
+   struct gl_buffer_object **bufObjs;
 
    if (!ctx->Extensions.EXT_semaphore) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glSignalSemaphoreEXT(unsupported)");
@@ -783,8 +791,14 @@ _mesa_SignalSemaphoreEXT(GLuint semaphore,
    if (!semObj)
       return;
 
-   /* TODO: memory barriers and layout transitions */
-   ctx->Driver.ServerSignalSemaphoreObject(ctx, semObj);
+   bufObjs = alloca(sizeof(struct gl_buffer_object **) * numBufferBarriers);
+   for (unsigned i = 0; i < numBufferBarriers; i++) {
+      bufObjs[i] = _mesa_lookup_bufferobj(ctx, buffers[i]);
+   }
+
+   /* TODO: layout transitions */
+   ctx->Driver.ServerSignalSemaphoreObject(ctx, semObj,
+                                           numBufferBarriers, bufObjs);
 }
 
 void GLAPIENTRY

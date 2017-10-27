@@ -1149,14 +1149,18 @@ struct dd_function_table {
     * server's command stream
     */
    void (*ServerWaitSemaphoreObject)(struct gl_context *ctx,
-                                     struct gl_semaphore_object *semObj);
+                                     struct gl_semaphore_object *semObj,
+                                     GLuint numBufferBarriers,
+                                     struct gl_buffer_object **bufObjs);
 
    /**
     * Introduce an operation to signal the semaphore object in the GL
     * server's command stream
     */
    void (*ServerSignalSemaphoreObject)(struct gl_context *ctx,
-                                       struct gl_semaphore_object *semObj);
+                                       struct gl_semaphore_object *semObj,
+                                       GLuint numBufferBarriers,
+                                       struct gl_buffer_object **bufObjs);
    /*@}*/
 
    /**
