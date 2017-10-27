@@ -6,6 +6,8 @@
 #include "main/externalobjects.h"
 
 #include "st_context.h"
+#include "st_texture.h"
+#include "st_cb_bufferobjects.h"
 #include "st_cb_semaphoreobjects.h"
 
 #include "state_tracker/drm_driver.h"
@@ -51,25 +53,74 @@ st_import_semaphoreobj_fd(struct gl_context *ctx,
 
 static void
 st_server_wait_semaphore(struct gl_context *ctx,
-                         struct gl_semaphore_object *semObj)
+                         struct gl_semaphore_object *semObj,
+                         GLuint numBufferBarriers,
+                         struct gl_buffer_object **bufObjs,
+                         GLuint numTextureBarriers,
+                         struct gl_texture_object **texObjs,
+                         const GLenum *srcLayouts)
 {
    struct st_semaphore_object *st_obj = st_semaphore_object(semObj);
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
+   struct st_buffer_object *bufObj;
+   struct st_texture_object *texObj;
 
+   for (unsigned i = 0; i < numBufferBarriers; i++) {
+      if (!bufObjs[i])
+         continue;
+
+      bufObj = st_buffer_object(bufObjs[i]);
+      pipe->flush_resource(pipe, bufObj->buffer);
+   }
+
+   for (unsigned i = 0; i < numTextureBarriers; i++) {
+      if (!texObjs[i])
+         continue;
+
+      texObj = st_texture_object(texObjs[i]);
+      pipe->flush_resource(pipe, texObj->pt);
+   }
+
+   /* TODO: layout transition */
    _mesa_flush(ctx);
    pipe->semobj_wait(pipe, st_obj->semaphore);
 }
 
 static void
 st_server_signal_semaphore(struct gl_context *ctx,
-                           struct gl_semaphore_object *semObj)
+                           struct gl_semaphore_object *semObj,
+                           GLuint numBufferBarriers,
+                           struct gl_buffer_object **bufObjs,
+                           GLuint numTextureBarriers,
+                           struct gl_texture_object **texObjs,
+                           const GLenum *dstLayouts)
 {
    struct st_semaphore_object *st_obj = st_semaphore_object(semObj);
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
+   struct st_buffer_object *bufObj;
+   struct st_texture_object *texObj;
 
    pipe->semobj_signal(pipe, st_obj->semaphore);
+
+   for (unsigned i = 0; i < numBufferBarriers; i++) {
+      if (!bufObjs[i])
+         continue;
+
+      bufObj = st_buffer_object(bufObjs[i]);
+      pipe->flush_resource(pipe, bufObj->buffer);
+   }
+
+   for (unsigned i = 0; i < numTextureBarriers; i++) {
+      if (!texObjs[i])
+         continue;
+
+      texObj = st_texture_object(texObjs[i]);
+      pipe->flush_resource(pipe, texObj->pt);
+   }
+
+   /* TODO: layout transition */
    _mesa_flush(ctx);
 }
 
