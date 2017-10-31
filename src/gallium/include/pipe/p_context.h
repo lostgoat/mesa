@@ -746,6 +746,16 @@ struct pipe_context {
                           struct pipe_resource *resource);
 
    /**
+    * Transition a resource to a different layout so it can be used by
+    * an external client.
+    *
+    * Note: The layout definitions across clients must be consistent.
+    */
+   void (*transition_resource)(struct pipe_context *ctx,
+                               struct pipe_resource *resource,
+                               enum pipe_layout layout);
+
+   /**
     * Invalidate the contents of the resource. This is used to
     *
     * (1) implement EGL's semantic of undefined depth/stencil

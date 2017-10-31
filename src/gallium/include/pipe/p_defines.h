@@ -582,6 +582,17 @@ enum pipe_swizzle {
    PIPE_SWIZZLE_MAX, /**< Number of enums counter (must be last) */
 };
 
+enum pipe_layout
+{
+   PIPE_LAYOUT_GENERAL_EXT,
+   PIPE_LAYOUT_COLOR_ATTACHMENT,
+   PIPE_LAYOUT_DEPTH_STENCIL_ATTACHMENT,
+   PIPE_LAYOUT_DEPTH_STENCIL_READ_ONLY,
+   PIPE_LAYOUT_SHADER_READ_ONLY,
+   PIPE_LAYOUT_TRANSFER_SRC,
+   PIPE_LAYOUT_TRANSFER_DST,
+};
+
 #define PIPE_TIMEOUT_INFINITE 0xffffffffffffffffull
 
 

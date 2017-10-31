@@ -2221,6 +2221,32 @@ tc_invalidate_resource(struct pipe_context *_pipe,
    tc_set_resource_reference(&payload->resource, resource);
 }
 
+struct tc_transition_resource {
+   struct pipe_resource *resource;
+   enum pipe_layout layout;
+};
+
+static void
+tc_call_transition_resource(struct pipe_context *pipe, union tc_payload *payload)
+{
+   struct tc_transition_resource *p = (struct tc_transition_resource *)payload;
+   pipe->transition_resource(pipe, p->resource, p->layout);
+   tc_set_resource_reference(&p->resource, NULL);
+}
+
+static void
+tc_transition_resource(struct pipe_context *pipe,
+                       struct pipe_resource *resource,
+                       enum pipe_layout layout)
+{
+   struct threaded_context *tc = threaded_context(pipe);
+   struct tc_transition_resource *p = tc_add_struct_typed_call(tc,
+                                                               TC_CALL_transition_resource,
+                                                               tc_transition_resource);
+   tc_set_resource_reference(&p->resource, resource);
+   p->layout = layout;
+}
+
 struct tc_clear {
    unsigned buffers;
    union pipe_color_union color;
@@ -2555,6 +2581,7 @@ threaded_context_create(struct pipe_context *pipe,
    CTX_INIT(clear_buffer);
    CTX_INIT(clear_texture);
    CTX_INIT(flush_resource);
+   CTX_INIT(transition_resource);
    CTX_INIT(generate_mipmap);
    CTX_INIT(render_condition);
    CTX_INIT(create_query);
