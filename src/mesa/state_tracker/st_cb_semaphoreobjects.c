@@ -51,6 +51,29 @@ st_import_semaphoreobj_fd(struct gl_context *ctx,
 #endif
 }
 
+static enum pipe_layout
+pipe_layout(GLenum gl_layout)
+{
+   switch (gl_layout) {
+   case GL_LAYOUT_GENERAL_EXT:
+      return PIPE_LAYOUT_GENERAL_EXT;
+   case PIPE_LAYOUT_COLOR_ATTACHMENT:
+      return PIPE_LAYOUT_COLOR_ATTACHMENT;
+   case PIPE_LAYOUT_DEPTH_STENCIL_ATTACHMENT:
+      return PIPE_LAYOUT_DEPTH_STENCIL_ATTACHMENT;
+   case PIPE_LAYOUT_DEPTH_STENCIL_READ_ONLY:
+      return PIPE_LAYOUT_DEPTH_STENCIL_READ_ONLY;
+   case PIPE_LAYOUT_SHADER_READ_ONLY:
+      return PIPE_LAYOUT_SHADER_READ_ONLY;
+   case PIPE_LAYOUT_TRANSFER_SRC:
+      return PIPE_LAYOUT_TRANSFER_SRC;
+   case PIPE_LAYOUT_TRANSFER_DST:
+      return PIPE_LAYOUT_TRANSFER_DST;
+   default:
+      unreachable("unexpected layout");
+   }
+}
+
 static void
 st_server_wait_semaphore(struct gl_context *ctx,
                          struct gl_semaphore_object *semObj,
@@ -65,6 +88,7 @@ st_server_wait_semaphore(struct gl_context *ctx,
    struct pipe_context *pipe = st->pipe;
    struct st_buffer_object *bufObj;
    struct st_texture_object *texObj;
+   enum pipe_layout srcLayout;
 
    for (unsigned i = 0; i < numBufferBarriers; i++) {
       if (!bufObjs[i])
@@ -79,10 +103,12 @@ st_server_wait_semaphore(struct gl_context *ctx,
          continue;
 
       texObj = st_texture_object(texObjs[i]);
+      srcLayout = pipe_layout(srcLayouts[i]);
+
       pipe->flush_resource(pipe, texObj->pt);
+      pipe->transition_resource(pipe, texObj->pt, srcLayout);
    }
 
-   /* TODO: layout transition */
    _mesa_flush(ctx);
    pipe->semobj_wait(pipe, st_obj->semaphore);
 }
@@ -101,6 +127,7 @@ st_server_signal_semaphore(struct gl_context *ctx,
    struct pipe_context *pipe = st->pipe;
    struct st_buffer_object *bufObj;
    struct st_texture_object *texObj;
+   enum pipe_layout dstLayout;
 
    pipe->semobj_signal(pipe, st_obj->semaphore);
 
@@ -117,10 +144,12 @@ st_server_signal_semaphore(struct gl_context *ctx,
          continue;
 
       texObj = st_texture_object(texObjs[i]);
+      dstLayout = pipe_layout(dstLayouts[i]);
+
       pipe->flush_resource(pipe, texObj->pt);
+      pipe->transition_resource(pipe, texObj->pt, dstLayout);
    }
 
-   /* TODO: layout transition */
    _mesa_flush(ctx);
 }
 
