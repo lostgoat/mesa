@@ -1471,6 +1471,16 @@ static void si_flush_resource(struct pipe_context *ctx,
 	}
 }
 
+static void si_transition_resource(struct pipe_context *ctx,
+				   struct pipe_resource *res,
+				   enum pipe_layout layout)
+{
+	/**
+	 * Radeonsi/RADV use a compatible layout for all
+	 * exported resources.
+	 */
+}
+
 static void si_decompress_dcc(struct pipe_context *ctx,
 			      struct r600_texture *rtex)
 {
@@ -1552,6 +1562,7 @@ void si_init_blit_functions(struct si_context *sctx)
 	sctx->b.b.blit = si_blit;
 	sctx->b.b.flush_resource = si_flush_resource;
 	sctx->b.b.generate_mipmap = si_generate_mipmap;
+	sctx->b.b.transition_resource = si_transition_resource;
 	sctx->b.blit_decompress_depth = si_blit_decompress_depth;
 	sctx->b.decompress_dcc = si_decompress_dcc;
 }
